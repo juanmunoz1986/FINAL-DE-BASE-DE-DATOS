@@ -103,8 +103,15 @@ CREATE TABLE Pago (
     Monto DECIMAL(10,2),
     Fecha DATE,
     Estado VARCHAR(255),
-    FOREIGN KEY (ClienteID) REFERENCES Cliente(ClienteID)
+    CursoID INT,
+    FOREIGN KEY (ClienteID) REFERENCES Cliente(ClienteID),
+    FOREIGN KEY (CursoID) REFERENCES Curso(CursoID)
 );
+
+
+
+
+
 
 CREATE TABLE Inscripcion (
     ClienteID INT,
@@ -250,16 +257,23 @@ VALUES
 (29, 10, 'Tareas', 40.0),
 (30, 10, 'Proyecto final', 30.0);
 
-INSERT INTO Pago (PagoID, ClienteID, ReferenciaBancaria, Monto, Fecha, Estado) 
+INSERT INTO Pago (PagoID, ClienteID, ReferenciaBancaria, Monto, Fecha, Estado, CursoID) 
 VALUES 
-(1, 1, 'Ref1001', 300.00, '2023-01-10', 'Pagado'),
-(2, 2, 'Ref1002', 350.00, '2023-01-12', 'Pagado'),
-(3, 3, 'Ref1003', 400.00, '2023-01-15', 'Pagado'),
-(4, 4, 'Ref1004', 450.00, '2023-01-18', 'Pagado'),
-(5, 5, 'Ref1005', 300.00, '2023-01-20', 'Pagado'),
-(6, 6, 'Ref1006', 350.00, '2023-01-22', 'Pagado'),
-(7, 7, 'Ref1007', 400.00, '2023-01-25', 'Pagado'),
-(8, 8, 'Ref1008', 450.00, '2023-01-28', 'Pagado');
+(1, 1, 'Ref1001', 300.00, '2023-01-10', 'Pagado', 1),
+(2, 2, 'Ref1002', 350.00, '2023-01-12', 'Pagado', 2),
+(3, 3, 'Ref1003', 400.00, '2023-01-15', 'Pagado', 3),
+(4, 4, 'Ref1004', 450.00, '2023-01-18', 'Pagado', 4),
+(5, 5, 'Ref1005', 300.00, '2023-01-20', 'Pagado', 5),
+(6, 6, 'Ref1006', 350.00, '2023-01-22', 'Pagado', 5),
+(7, 7, 'Ref1007', 400.00, '2023-01-25', 'Pagado', 4),
+(8, 8, 'Ref1008', 450.00, '2023-01-28', 'Pagado', 4);
+
+
+INSERT INTO Pago (PagoID, ClienteID, ReferenciaBancaria, Monto, Fecha, Estado, CursoID)
+VALUES
+(9, 9, 'Ref1009', 1000.00 ,null, 'Pendiente', 3),
+(10, 10, 'Ref1010', 5500.00, null, 'Pendiente', 2);
+
 
 
 INSERT INTO Inscripcion (ClienteID, CursoID) 
@@ -471,3 +485,156 @@ WHERE
 
 
 
+SELECT 
+    c.Nombre, 
+    c.ApellidoPaterno, 
+    c.ApellidoMaterno, 
+    c.ClienteID AS Matricula, 
+    cu.Nombre AS NombreCurso, 
+    re.Calificacion
+FROM 
+    Cliente c, 
+    Curso cu, 
+    Inscripcion i, 
+    Examen e, 
+    ResultadoExamen re
+WHERE 
+    c.ClienteID = i.ClienteID AND 
+    i.CursoID = cu.CursoID AND 
+    e.CursoID = cu.CursoID AND 
+    re.ExamenID = e.ExamenID AND 
+    re.ClienteID = c.ClienteID;
+
+
+SELECT 
+    c.Nombre, 
+    c.ApellidoPaterno, 
+    c.ApellidoMaterno, 
+    c.ClienteID AS Matricula, 
+    cu.Nombre AS NombreCurso, 
+    re.Calificacion
+FROM 
+    Cliente c
+JOIN 
+    Inscripcion i ON c.ClienteID = i.ClienteID
+JOIN 
+    Curso cu ON i.CursoID = cu.CursoID
+JOIN 
+    Examen e ON cu.CursoID = e.CursoID
+JOIN 
+    ResultadoExamen re ON c.ClienteID = re.ClienteID AND e.ExamenID = re.ExamenID;
+
+
+SELECT 
+    Nombre AS NombreCurso, 
+    Categoria
+FROM 
+    Curso
+ORDER BY 
+    Categoria;
+
+
+SELECT 
+    Curso.Nombre AS NombreCurso,
+    Curso.Costo
+FROM
+  Curso
+WHERE
+    Curso.Costo > 2000 AND Curso.Costo < 4000 
+ORDER BY
+    Curso.Costo DESC;  
+
+
+SELECT 
+    Cliente.Nombre, 
+    Cliente.ApellidoPaterno, 
+    Cliente.ApellidoMaterno, 
+    Cliente.Email, 
+    Curso.Nombre AS NombreCurso,
+    Cliente.ClienteID AS ID
+FROM
+    Cliente 
+JOIN
+    Inscripcion ON Cliente.ClienteID = Inscripcion.ClienteID
+JOIN
+    Curso ON Inscripcion.CursoID = Curso.CursoID
+LEFT JOIN 
+    Pago ON Cliente.ClienteID = Pago.ClienteID AND Inscripcion.CursoID = Pago.CursoID
+WHERE
+    Pago.Estado = 'Pendiente';
+
+
+SELECT 
+    Cliente.Nombre, 
+    Cliente.ApellidoPaterno, 
+    Cliente.ApellidoMaterno, 
+    Cliente.Email, 
+    Curso.Nombre AS NombreCurso
+FROM
+    Cliente, Inscripcion, Curso, Pago
+WHERE
+    Cliente.ClienteID = Inscripcion.ClienteID AND
+    Inscripcion.CursoID = Curso.CursoID AND
+    Cliente.ClienteID = Pago.ClienteID AND
+    Inscripcion.CursoID = Pago.CursoID AND
+    Pago.Estado = 'Pendiente';
+
+
+SELECT
+    Curso.Nombre AS NombreCurso,
+    Curso.Categoria
+FROM
+    Curso
+WHERE
+    Curso.Categoria = 'Administracion' ;    
+
+
+SELECT
+    Tarea.Nombre,
+    Curso.Nombre AS NombreCurso
+FROM
+    Tarea
+JOIN
+    Curso ON Tarea.CursoID = Curso.CursoID
+WHERE
+    Curso.CursoID = 3 OR Curso.CursoID = 4 ;   
+
+
+
+SELECT
+    Tarea.Nombre,
+    Curso.Nombre AS NombreCurso
+FROM
+    Tarea, Curso
+
+WHERE
+    Tarea.CursoID = Curso.CursoID AND
+    (Curso.CursoID = 3 OR Curso.CursoID = 4) ;        
+
+
+
+SELECT
+    Curso.Nombre AS NombreCurso,
+    Examen.Nombre AS NombreExamen
+FROM
+    Curso
+JOIN
+    Examen ON Curso.CursoID = Examen.CursoID
+WHERE
+    Curso.CursoID = 7
+    OR Curso.CursoID = 8
+    OR Curso.CursoID = 6 
+    OR Curso.CursoID = 5 ;        
+    
+
+SELECT
+    Curso.Nombre AS NombreCurso,
+    Examen.Nombre AS NombreExamen
+FROM
+    Curso, Examen
+WHERE
+    Curso.CursoID = Examen.CursoID AND
+    (Curso.CursoID = 7 OR 
+    Curso.CursoID = 8 OR 
+    Curso.CursoID = 6 OR 
+    Curso.CursoID = 5) ;
